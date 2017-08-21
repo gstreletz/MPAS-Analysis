@@ -27,7 +27,7 @@ import xarray as xr
 import sys
 
 from ..grid import MpasMeshDescriptor, LatLonGridDescriptor, \
-    ProjectionGridDescriptor
+    ProjectionGridDescriptor, PointCollectionDescriptor
 
 
 class Remapper(object):
@@ -81,15 +81,19 @@ class Remapper(object):
         04/13/2017
         '''
 
+        if isinstance(sourceDescriptor, PointCollectionDescriptor):
+            raise TypeError("sourceDescriptor of type "
+                            "PointCollectionDescriptor is not supported.")
         if not isinstance(sourceDescriptor,
                           (MpasMeshDescriptor,  LatLonGridDescriptor,
                            ProjectionGridDescriptor)):
-            raise ValueError("sourceDescriptor is not of a recognized type.")
+            raise TypeError("sourceDescriptor is not of a recognized type.")
 
         if not isinstance(destinationDescriptor,
                           (MpasMeshDescriptor,  LatLonGridDescriptor,
-                           ProjectionGridDescriptor)):
-            raise ValueError(
+                           ProjectionGridDescriptor,
+                           PointCollectionDescriptor)):
+            raise TypeError(
                 "destinationDescriptor is not of a recognized type.")
 
         self.sourceDescriptor = sourceDescriptor
@@ -133,6 +137,13 @@ class Remapper(object):
         -------------
         04/13/2017
         '''
+
+        if isinstance(self.destinationDescriptor,
+                      PointCollectionDescriptor) and \
+                method not in ['bilinear', 'neareststod']:
+            raise ValueError("method {} not supported for destination "
+                             "grid of type PointCollectionDescriptor."
+                             "".format(method))
 
         if self.mappingFileName is None or \
                 os.path.exists(self.mappingFileName):
@@ -237,11 +248,14 @@ class Remapper(object):
             # a remapped file already exists, so nothing to do
             return
 
-        if isinstance(self.sourceDescriptor, ProjectionGridDescriptor):
+        if isinstance(self.sourceDescriptor, (ProjectionGridDescriptor,
+                                              PointCollectionDescriptor)):
             raise TypeError('Source grid is a projection grid, not supported '
                             'by ncremap.\n'
                             'Consider using Remapper.remap')
-        if isinstance(self.destinationDescriptor, ProjectionGridDescriptor):
+        if isinstance(self.destinationDescriptor,
+                      (ProjectionGridDescriptor,
+                       PointCollectionDescriptor)):
             raise TypeError('Destination grid is a projection grid, not '
                             'supported by ncremap.\n'
                             'Consider using Remapper.remap')

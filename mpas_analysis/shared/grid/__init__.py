@@ -1,2 +1,2 @@
 from .grid import MpasMeshDescriptor, LatLonGridDescriptor, \
-    ProjectionGridDescriptor
+    ProjectionGridDescriptor, PointCollectionDescriptor, interp_extrap_corner
