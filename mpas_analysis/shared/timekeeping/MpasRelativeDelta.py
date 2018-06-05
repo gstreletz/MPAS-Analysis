@@ -1,3 +1,14 @@
+# Copyright (c) 2017,  Los Alamos National Security, LLC (LANS)
+# and the University Corporation for Atmospheric Research (UCAR).
+#
+# Unless noted otherwise source code is licensed under the BSD license.
+# Additional copyright and license information can be found in the LICENSE file
+# distributed with this code, or at http://mpas-dev.github.com/license.html
+#
+
+from __future__ import absolute_import, division, print_function, \
+    unicode_literals
+
 import datetime
 from dateutil.relativedelta import relativedelta
 from calendar import monthrange, isleap
@@ -5,18 +16,18 @@ from calendar import monthrange, isleap
 
 class MpasRelativeDelta(relativedelta):
     """
-    MpasRelativeDelta is a subclass of dateutil.relativedelta for relative time
-    intervals with different MPAS calendars.
+    ``MpasRelativeDelta`` is a subclass of ``dateutil.relativedelta`` for
+    relative time intervals with different MPAS calendars.
 
     Only relative intervals (years, months, etc.) are supported and not the
     absolute date specifications (year, month, etc.).  Addition/subtraction
-    of datetime.datetime objects or other MpasRelativeDelta (but currently not
-    datetime.date, datetime.timedelta or other related objects) is supported.
-
-    Author
-    ------
-    Xylar Asay-Davis
+    of ``datetime.datetime`` objects or other ``MpasRelativeDelta`` (but
+    currently not ``datetime.date``, ``datetime.timedelta`` or other related
+    objects) is supported.
     """
+    # Authors
+    # -------
+    # Xylar Asay-Davis
 
     def __init__(self, dt1=None, dt2=None, years=0, months=0, days=0,
                  hours=0, minutes=0, seconds=0, calendar='gregorian'):

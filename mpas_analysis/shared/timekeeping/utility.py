@@ -1,43 +1,53 @@
+# Copyright (c) 2017,  Los Alamos National Security, LLC (LANS)
+# and the University Corporation for Atmospheric Research (UCAR).
+#
+# Unless noted otherwise source code is licensed under the BSD license.
+# Additional copyright and license information can be found in the LICENSE file
+# distributed with this code, or at http://mpas-dev.github.com/license.html
+#
 """
 Time keeping utility functions
-
-Author
-------
-Xylar Asay-Davis
 """
+# Authors
+# -------
+# Xylar Asay-Davis
+
+from __future__ import absolute_import, division, print_function, \
+    unicode_literals
 
 import datetime
 import netCDF4
 import numpy
+import six
 
-from .MpasRelativeDelta import MpasRelativeDelta
+from mpas_analysis.shared.timekeeping.MpasRelativeDelta import \
+    MpasRelativeDelta
 
 
 def get_simulation_start_time(streams):
     """
-    Given a StreamsFile object, returns the simulation start time parsed from
-    a restart file.
+    Given a ``StreamsFile`` object, returns the simulation start time parsed
+    from a restart file.
 
     Parameters
     ----------
-    steams : StreamsFile object
+    steams : ``StreamsFile`` object
         For parsing an MPAS streams file
 
     Returns
     -------
-    simulation_start_time : string
+    simulation_start_time : str
         The start date of the simulation parsed from a restart file identified
-        by the contents of `streams`.
+        by the contents of ``streams``.
 
     Raises
     ------
     IOError
         If no restart file can be found.
-
-    Author
-    ------
-    Xylar Asay-Davis
     """
+    # Authors
+    # -------
+    # Xylar Asay-Davis
 
     try:
         restartFile = streams.readpath('restart')[0]
@@ -48,7 +58,7 @@ def get_simulation_start_time(streams):
     ncFile = netCDF4.Dataset(restartFile, mode='r')
     simulationStartTime = ncFile.variables['simulationStartTime'][:]
     # convert from character array to str
-    simulationStartTime = ''.join(simulationStartTime).strip()
+    simulationStartTime = ''.join(simulationStartTime.astype('U')).strip()
     # replace underscores so it works as a CF-compliant reference date
     simulationStartTime = simulationStartTime.replace('_', ' ')
     ncFile.close()
@@ -58,40 +68,40 @@ def get_simulation_start_time(streams):
 
 def string_to_datetime(dateString):  # {{{
     """
-    Given a date string and a calendar, returns a `datetime.datetime`
+    Given a date string and a calendar, returns a ``datetime.datetime``
 
     Parameters
     ----------
     dateString : string
-        A date and time in one of the following formats:
-        - YYYY-MM-DD hh:mm:ss
-        - YYYY-MM-DD hh.mm.ss
-        - YYYY-MM-DD SSSSS
-        - DDD hh:mm:ss
-        - DDD hh.mm.ss
-        - DDD SSSSS
-        - hh.mm.ss
-        - hh:mm:ss
-        - YYYY-MM-DD
-        - YYYY-MM
-        - SSSSS
+        A date and time in one of the following formats::
+
+            YYYY-MM-DD hh:mm:ss
+            YYYY-MM-DD hh.mm.ss
+            YYYY-MM-DD SSSSS
+            DDD hh:mm:ss
+            DDD hh.mm.ss
+            DDD SSSSS
+            hh.mm.ss
+            hh:mm:ss
+            YYYY-MM-DD
+            YYYY-MM
+            SSSSS
 
         Note: either underscores or spaces can be used to separate the date
         from the time portion of the string.
 
     Returns
     -------
-    datetime : A `datetime.datetime` object
+    datetime : A ``datetime.datetime`` object
 
     Raises
     ------
     ValueError
-        If an invalid `dateString` is supplied.
-
-    Author
-    ------
-    Xylar Asay-Davis
+        If an invalid ``dateString`` is supplied.
     """
+    # Authors
+    # -------
+    # Xylar Asay-Davis
 
     (year, month, day, hour, minute, second) = \
         _parse_date_string(dateString, isInterval=False)
@@ -103,23 +113,24 @@ def string_to_datetime(dateString):  # {{{
 def string_to_relative_delta(dateString, calendar='gregorian'):  # {{{
     """
     Given a date string and a calendar, returns an instance of
-    `MpasRelativeDelta`
+    ``MpasRelativeDelta``
 
     Parameters
     ----------
-    dateString : string
-        A date and time in one of the following formats:
-        - YYYY-MM-DD hh:mm:ss
-        - YYYY-MM-DD hh.mm.ss
-        - YYYY-MM-DD SSSSS
-        - DDD hh:mm:ss
-        - DDD hh.mm.ss
-        - DDD SSSSS
-        - hh.mm.ss
-        - hh:mm:ss
-        - YYYY-MM-DD
-        - YYYY-MM
-        - SSSSS
+    dateString : str
+        A date and time in one of the following formats::
+
+            YYYY-MM-DD hh:mm:ss
+            YYYY-MM-DD hh.mm.ss
+            YYYY-MM-DD SSSSS
+            DDD hh:mm:ss
+            DDD hh.mm.ss
+            DDD SSSSS
+            hh.mm.ss
+            hh:mm:ss
+            YYYY-MM-DD
+            YYYY-MM
+            SSSSS
 
         Note: either underscores or spaces can be used to separate the date
         from the time portion of the string.
@@ -129,17 +140,16 @@ def string_to_relative_delta(dateString, calendar='gregorian'):  # {{{
 
     Returns
     -------
-    relativedelta : An `MpasRelativeDelta` object
+    relativedelta : An ``MpasRelativeDelta`` object
 
     Raises
     ------
     ValueError
-        If an invalid `dateString` is supplied.
-
-    Author
-    ------
-    Xylar Asay-Davis
+        If an invalid ``dateString`` is supplied.
     """
+    # Authors
+    # -------
+    # Xylar Asay-Davis
 
     (years, months, days, hours, minutes, seconds) = \
         _parse_date_string(dateString, isInterval=True)
@@ -161,18 +171,19 @@ def string_to_days_since_date(dateString, calendar='gregorian',
     ----------
     dateStrings : str or array-like of str
         A date and time (or array of date/times) in one of the following
-        formats:
-        - YYYY-MM-DD hh:mm:ss
-        - YYYY-MM-DD hh.mm.ss
-        - YYYY-MM-DD SSSSS
-        - DDD hh:mm:ss
-        - DDD hh.mm.ss
-        - DDD SSSSS
-        - hh.mm.ss
-        - hh:mm:ss
-        - YYYY-MM-DD
-        - YYYY-MM
-        - SSSSS
+        formats::
+
+            YYYY-MM-DD hh:mm:ss
+            YYYY-MM-DD hh.mm.ss
+            YYYY-MM-DD SSSSS
+            DDD hh:mm:ss
+            DDD hh.mm.ss
+            DDD SSSSS
+            hh.mm.ss
+            hh:mm:ss
+            YYYY-MM-DD
+            YYYY-MM
+            SSSSS
 
         Note: either underscores or spaces can be used to separate the date
         from the time portion of the string.
@@ -181,26 +192,27 @@ def string_to_days_since_date(dateString, calendar='gregorian',
         The name of one of the calendars supported by MPAS cores
 
     referenceDate : str, optional
-        A reference date of the form:
-            - 0001-01-01
-            - 0001-01-01 00:00:00
+        A reference date of the form::
+
+            0001-01-01
+            0001-01-01 00:00:00
 
     Returns
     -------
     days : float or numpy.array of floats
-        The number of days since `referenceDate` for each date in dateString
+        The number of days since ``referenceDate`` for each date in
+        ``dateString``
 
     Raises
     ------
     ValueError
-        If an invalid `dateString` or `calendar` is supplied.
-
-    Author
-    ------
-    Xylar Asay-Davis
+        If an invalid ``dateString`` or ``calendar`` is supplied.
     """
+    # Authors
+    # -------
+    # Xylar Asay-Davis
 
-    isSingleString = isinstance(dateString, str)
+    isSingleString = isinstance(dateString, six.string_types)
 
     if isSingleString:
         dateString = [dateString]
@@ -218,7 +230,7 @@ def string_to_days_since_date(dateString, calendar='gregorian',
 
 def days_to_datetime(days, calendar='gregorian', referenceDate='0001-01-01'):
     """
-    Covert days to `datetime.datetime` objects given a reference date and an
+    Covert days to ``datetime.datetime`` objects given a reference date and an
     MPAS calendar (either 'gregorian' or 'gregorian_noleap').
 
     Parameters
@@ -226,28 +238,29 @@ def days_to_datetime(days, calendar='gregorian', referenceDate='0001-01-01'):
     days : float or array-like of floats
         The number of days since the reference date.
 
-    calendar : {'gregorian', 'gregorian_noleap'}, optinal
-        A calendar to be used to convert days to a `datetime.datetime` object.
+    calendar : {'gregorian', 'gregorian_noleap'}, optional
+        A calendar to be used to convert days to a ``datetime.datetime``
+        object.
 
     referenceDate : str, optional
-        A reference date of the form:
-            - 0001-01-01
-            - 0001-01-01 00:00:00
+        A reference date of the form::
+
+            0001-01-01
+            0001-01-01 00:00:00
 
     Returns
     -------
-    datetime : An instance of `datetime.datetime` (or array-like of datetimes)
-        The days since `referenceDate` on the given `calendar`.
+    datetime : `datetime.datetime` (or array-like of datetimes)
+        The days since ``referenceDate`` on the given ``calendar``.
 
     Raises
     ------
     ValueError
-        If an invalid `days`, `referenceDate` or `calendar` is supplied.
-
-    Author
-    ------
-    Xylar Asay-Davis
+        If an invalid ``days``, ``referenceDate`` or ``calendar`` is supplied.
     """
+    # Authors
+    # -------
+    # Xylar Asay-Davis
 
     datetimes = netCDF4.num2date(days,
                                  'days since {}'.format(referenceDate),
@@ -276,31 +289,32 @@ def datetime_to_days(dates, calendar='gregorian', referenceDate='0001-01-01'):
     Parameters
     ----------
     datetime : instance or array-like of datetime.datetime
-        The date(s) to be converted to days since `referenceDate` on the
-        given `calendar`.
+        The date(s) to be converted to days since ``referenceDate`` on the
+        given ``calendar``.
 
     calendar : {'gregorian', 'gregorian_noleap'}, optional
-        A calendar to be used to convert days to a `datetime.datetime` object.
+        A calendar to be used to convert days to a ``datetime.datetime`` object.
 
     referenceDate : str, optional
-        A reference date of the form:
-            - 0001-01-01
-            - 0001-01-01 00:00:00
+        A reference date of the form::
+
+            0001-01-01
+            0001-01-01 00:00:00
 
     Returns
     -------
     days : float or array of floats
-        The days since `referenceDate` on the given `calendar`.
+        The days since ``referenceDate`` on the given ``calendar``.
 
     Raises
     ------
     ValueError
-        If an invalid `datetimes`, `referenceDate` or `calendar` is supplied.
-
-    Author
-    ------
-    Xylar Asay-Davis
+        If an invalid ``datetimes``, ``referenceDate`` or ``calendar`` is
+        supplied.
     """
+    # Authors
+    # -------
+    # Xylar Asay-Davis
 
     isSingleDate = False
     if isinstance(dates, datetime.datetime):
@@ -319,37 +333,37 @@ def datetime_to_days(dates, calendar='gregorian', referenceDate='0001-01-01'):
 def date_to_days(year=1, month=1, day=1, hour=0, minute=0, second=0,
                  calendar='gregorian', referenceDate='0001-01-01'):
     """
-    Given a date in the form of year, month, day, etc.; a calendar; and a
-    reference date, returns the days since the reference date.
+    Convert a date to days since the reference date.
 
     Parameters
     ----------
     year, month, day, hour, minute, second : int, optional
-        The date to be converted to days since `referenceDate` on the
-        given `calendar`.
+        The date to be converted to days since ``referenceDate`` on the
+        given ``calendar``.
 
     calendar : {'gregorian', 'gregorian_noleap'}, optional
-        A calendar to be used to convert days to a `datetime.datetime` object.
+        A calendar to be used to convert days to a ``datetime.datetime``
+        object.
 
     referenceDate : str, optional
-        A reference date of the form:
-            - 0001-01-01
-            - 0001-01-01 00:00:00
+        A reference date of the form::
+
+            0001-01-01
+            0001-01-01 00:00:00
 
     Returns
     -------
     days : float
-        The days since `referenceDate` on the given `calendar`.
+        The days since ``referenceDate`` on the given ``calendar``.
 
     Raises
     ------
     ValueError
-        If an invalid `referenceDate` or `calendar` is supplied.
-
-    Author
-    ------
-    Xylar Asay-Davis
+        If an invalid ``referenceDate`` or ``calendar`` is supplied.
     """
+    # Authors
+    # -------
+    # Xylar Asay-Davis
 
     calendar = _mpas_to_netcdf_calendar(calendar)
 
@@ -368,18 +382,19 @@ def _parse_date_string(dateString, isInterval=False):  # {{{
     Parameters
     ----------
     dateString : string
-        A date and time in one of the followingformats:
-        - YYYY-MM-DD hh:mm:ss
-        - YYYY-MM-DD hh.mm.ss
-        - YYYY-MM-DD SSSSS
-        - DDD hh:mm:ss
-        - DDD hh.mm.ss
-        - DDD SSSSS
-        - hh.mm.ss
-        - hh:mm:ss
-        - YYYY-MM-DD
-        - YYYY-MM
-        - SSSSS
+        A date and time in one of the followingformats::
+
+            YYYY-MM-DD hh:mm:ss
+            YYYY-MM-DD hh.mm.ss
+            YYYY-MM-DD SSSSS
+            DDD hh:mm:ss
+            DDD hh.mm.ss
+            DDD SSSSS
+            hh.mm.ss
+            hh:mm:ss
+            YYYY-MM-DD
+            YYYY-MM
+            SSSSS
 
         Note: either underscores or spaces can be used to separate the date
         from the time portion of the string.
@@ -395,19 +410,19 @@ def _parse_date_string(dateString, isInterval=False):  # {{{
     Raises
     ------
     ValueError
-        If an invalid `dateString` is supplied.
-
-    Author
-    ------
-    Xylar Asay-Davis
+        If an invalid ``dateString`` is supplied.
     """
+    # Authors
+    # -------
+    # Xylar Asay-Davis
+
     if isInterval:
         offset = 0
     else:
         offset = 1
 
     # change underscores to spaces so both can be supported
-    dateString = dateString.replace('_', ' ')
+    dateString = dateString.replace('_', ' ').strip()
     if ' ' in dateString:
         ymd, hms = dateString.split(' ')
     else:

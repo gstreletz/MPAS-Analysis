@@ -1,33 +1,48 @@
 #!/usr/bin/env python
+# Copyright (c) 2017,  Los Alamos National Security, LLC (LANS)
+# and the University Corporation for Atmospheric Research (UCAR).
+#
+# Unless noted otherwise source code is licensed under the BSD license.
+# Additional copyright and license information can be found in the LICENSE file
+# distributed with this code, or at http://mpas-dev.github.com/license.html
+#
 """
 Module of classes/routines to manipulate fortran namelist and streams
 files.
-
-Authors
--------
-Phillip Wolfram, Xylar Asay-Davis
-
-Last modified
--------------
-04/01/2017
 """
+# Authors
+# -------
+# Phillip Wolfram, Xylar Asay-Davis
 
+from __future__ import absolute_import, division, print_function, \
+    unicode_literals
+
+import six
 from lxml import etree
 import re
 import os.path
 
-from ..containers import ReadOnlyDict
-from .utility import paths
-from ..timekeeping.utility import string_to_datetime, string_to_relative_delta
+from mpas_analysis.shared.containers import ReadOnlyDict
+from mpas_analysis.shared.io.utility import paths
+from mpas_analysis.shared.timekeeping.utility import string_to_datetime
 
 
 def convert_namelist_to_dict(fname, readonly=True):
     """
     Converts a namelist file to key-value pairs in dictionary.
 
-    Phillip J Wolfram
-    10/22/2016
+    Parameters
+    ----------
+    fname : str
+        The file name of the namelist
+
+    readonly : bool, optional
+        Should the resulting dictionary read-only?
     """
+    # Authors
+    # -------
+    # Phillip J Wolfram
+
     # form dictionary
     nml = dict()
 
@@ -48,23 +63,29 @@ class NameList:
     """
     Class for fortran manipulation of namelist files, provides
     read and write functionality
-
-    Authors
-    -------
-    Phillip Wolfram, Xylar Asay-Davis
-
-    Last modified
-    -------------
-    02/06/2017
     """
+    # Authors
+    # -------
+    # Phillip Wolfram, Xylar Asay-Davis
 
     # constructor
     def __init__(self, fname, path=None):
         """
-        parse the namelist file given by fname. If the optional argument
-        path is provided, and fname contains a relative path, fname is
-        relative to path, rather than the current working directory.
+        Parse the namelist file
+
+        Parameters
+        ----------
+        fname : str
+            The file name of the namelist file
+
+        path : str, optional
+            If ``fname`` contains a relative path, ``fname`` is
+            relative to ``path``, rather than the current working directory
         """
+        # Authors
+        # -------
+        # Phillip Wolfram, Xylar Asay-Davis
+
         if not os.path.isabs(fname) and path is not None:
             # only the file name was given, not the absolute path, and
             # a path was provided, so we will assume the namelist
@@ -78,27 +99,126 @@ class NameList:
 
     # note following accessors do not do type casting
     def __getattr__(self, key):
-        """ Accessor for dot noation, e.g., nml.field, returns string """
+        """
+        Accessor for dot noation, e.g., nml.field
+
+        Parameters
+        ----------
+        key : str
+            The key to get a value for
+
+        Returns
+        -------
+        value : str
+            The value associated with ``key``
+        """
+        # Authors
+        # -------
+        # Phillip Wolfram, Xylar Asay-Davis
+
         return self.nml[key]
 
     # provide accessor for dictionary notation (returns string)
     def __getitem__(self, key):
-        """ Accessor for bracket noation, e.g., nml['field'], returns string
         """
+        Accessor for bracket noation, e.g., nml['field']
+
+        Parameters
+        ----------
+        key : str
+            The key to get a value for
+
+        Returns
+        -------
+        value : str
+            The value associated with ``key``
+        """
+        # Authors
+        # -------
+        # Phillip Wolfram, Xylar Asay-Davis
+
         return self.nml[key]
 
     # provide accessors for get, getint, getfloat, getbool with appropriate
     # casting for comparable behavior with config files #{{{
     def get(self, key):
+        """
+        Get the value associated with a given key
+
+        Parameters
+        ----------
+        key : str
+            The key to get a value for
+
+        Returns
+        -------
+        value : str
+            The value associated with ``key``
+        """
+        # Authors
+        # -------
+        # Phillip Wolfram, Xylar Asay-Davis
+
         return self.nml[key]
 
     def getint(self, key):
+        """
+        Get the integer value associated with a given key
+
+        Parameters
+        ----------
+        key : str
+            The key to get a value for
+
+        Returns
+        -------
+        value : int
+            The value associated with ``key``
+        """
+        # Authors
+        # -------
+        # Phillip Wolfram, Xylar Asay-Davis
+
         return int(self.nml[key])
 
     def getfloat(self, key):
+        """
+        Get the float value associated with a given key
+
+        Parameters
+        ----------
+        key : str
+            The key to get a value for
+
+        Returns
+        -------
+        value : float
+            The value associated with ``key``
+        """
+        # Authors
+        # -------
+        # Phillip Wolfram, Xylar Asay-Davis
+
         return float(self.nml[key])
 
     def getbool(self, key):
+        """
+        Get the boolean value associated with a given key
+
+        Parameters
+        ----------
+        key : str
+            The key to get a value for
+
+        Returns
+        -------
+        value : bool
+            The value associated with ``key``
+        """
+        # Authors
+        # -------
+        # Phillip Wolfram, Xylar Asay-Davis
+
         if 'True' in self.nml[key] or 'true' in self.nml[key]:
             return True
         else:
@@ -124,22 +244,17 @@ class NameList:
         ------
         ValueError
             If no match is found.
-
-        Authors
-        -------
-        Xylar Asay-Davis
-
-        Last modified
-        -------------
-        04/01/2017
         """
+        # Authors
+        # -------
+        # Xylar Asay-Davis
 
         for optionName in possibleOptions:
             if optionName in self.nml.keys():
                 return optionName
 
-        raise ValueError('None of the possible options {} found in namelist file {}.'.format(
-            possibleOptions, self.fname))
+        raise ValueError('None of the possible options {} found in namelist '
+                         'file {}.'.format(possibleOptions, self.fname))
 
     # }}}
 
@@ -148,17 +263,28 @@ class StreamsFile:
     """
     Class to read in streams configuration file, provdies
     read and write functionality
-
-    Phillip Wolfram, Xylar Asay-Davis
-    Last modified: 11/02/2016
     """
+    # Authors
+    # -------
+    # Phillip Wolfram, Xylar Asay-Davis
 
     def __init__(self, fname, streamsdir=None):
         """
-        parse the streams file given by fname. If the optional argument
-        streamsdir is provided, it is the base path to both the output streams
-        data and the sreams file (the latter only if fname is a relative path).
+        Parse the streams file.
+
+        Parameters
+        ----------
+        fname : str
+            The file name the stream file
+
+        streamsdir : str, optional
+            The base path to both the output streams data and the sreams file
+            (the latter only if ``fname`` is a relative path).
         """
+        # Authors
+        # -------
+        # Phillip Wolfram, Xylar Asay-Davis
+
         if not os.path.isabs(fname) and streamsdir is not None:
             # only the file name was given, not the absolute path, and
             # a streamsdir was provided, so we will assume the streams
@@ -178,13 +304,67 @@ class StreamsFile:
             self.streamsdir = streamsdir
 
     def read(self, streamname, attribname):
-        """ name is a list of name entries terminanting in some value
         """
+        Get the value of the given attribute in the given stream
+
+        Parameters
+        ----------
+        streamname : str
+            The name of the stream
+
+        attribname : str
+            The name of the attribute within the stream
+
+
+        Returns
+        -------
+        value : str
+            The value associated with the attribute, or ``None`` if the
+            attribute was not found
+        """
+        # Authors
+        # -------
+        # Phillip Wolfram, Xylar Asay-Davis
+
         for stream in self.root:
             # assumes streamname is unique in XML
             if stream.get('name') == streamname:
                 return stream.get(attribname)
         return None
+
+    def read_datetime_template(self, streamname):
+        """
+        Get the value of the given attribute in the given stream
+
+        Parameters
+        ----------
+        streamname : str
+            The name of the stream
+
+        Returns
+        -------
+        value : str
+            The template for file names from this stream in a format accepted
+            by ``datetime.strptime``.  This is useful for parsing the date
+            from a given file name.
+        """
+        # Authors
+        # -------
+        # Xylar Asay-Davis
+
+        template = self.read(streamname, 'filename_template')
+        replacements = {'$Y': '%Y',
+                        '$M': '%m',
+                        '$D': '%d',
+                        '$S': '00000',  # datetime doesn't handle seconds alone
+                        '$h': '%H',
+                        '$m': '%M',
+                        '$s': '%S'}
+
+        for old in replacements:
+            template = template.replace(old, replacements[old])
+
+        return template
 
     def readpath(self, streamName, startDate=None, endDate=None,
                  calendar=None):
@@ -206,7 +386,7 @@ class StreamsFile:
             and added to endDate because the file date might be the first
             or last date contained in the file (or anything in between).
 
-        calendar: {'gregorian', 'gregorian_noleap'}, optional
+        calendar : {'gregorian', 'gregorian_noleap'}, optional
             The name of one of the calendars supported by MPAS cores, and is
             required if startDate and/or endDate are supplied
 
@@ -220,15 +400,11 @@ class StreamsFile:
         ------
         ValueError
             If no files from the stream are found.
-
-        Author
-        ------
-        Xylar Asay-Davis
-
-        Last modified
-        -------------
-        02/04/2017
         """
+        # Authors
+        # -------
+        # Xylar Asay-Davis
+
         template = self.read(streamName, 'filename_template')
         if template is None:
             raise ValueError('Stream {} not found in streams file {}.'.format(
@@ -261,12 +437,12 @@ class StreamsFile:
 
         if startDate is not None:
             # read one extra file before the start date to be on the safe side
-            if isinstance(startDate, str):
+            if isinstance(startDate, six.string_types):
                 startDate = string_to_datetime(startDate)
 
         if endDate is not None:
             # read one extra file after the end date to be on the safe side
-            if isinstance(endDate, str):
+            if isinstance(endDate, six.string_types):
                 endDate = string_to_datetime(endDate)
 
         # remove any path that's part of the template
@@ -297,12 +473,26 @@ class StreamsFile:
 
     def has_stream(self, streamName):
         """
+        Does the stream file have the given stream?
+
         Returns True if the streams file has a stream with the given
         streamName, otherwise returns False.
 
-        Xylar Asay-Davis
-        Last modified: 12/04/2016
+        Parameters
+        ----------
+        streamName : str
+            The name of the stream
+
+        Returns
+        -------
+        streamFound : bool
+            ``True`` if the stream was found in the stream file, ``False``
+            otherwise
         """
+        # Authors
+        # -------
+        # Xylar Asay-Davis
+
         for stream in self.root:
             # assumes streamname is unique in XML
             if stream.get('name') == streamName:
@@ -316,7 +506,7 @@ class StreamsFile:
 
         Parameters
         ----------
-        possibleStreams: list of str
+        possibleStreams : list of str
             A list of streams to search for
 
         Returns
@@ -329,20 +519,16 @@ class StreamsFile:
         ------
         ValueError
             If no match is found.
-
-        Authors
-        -------
-        Xylar Asay-Davis
-
-        Last modified
-        -------------
-        04/01/2017
         """
+        # Authors
+        # -------
+        # Xylar Asay-Davis
+
         for streamName in possibleStreams:
             if self.has_stream(streamName):
                 return streamName
 
-        raise ValueError('None of the possible streams {} found in streams file {}.'.format(
-            possibleStreams, self.fname))
+        raise ValueError('None of the possible streams {} found in streams '
+                         'file {}.'.format(possibleStreams, self.fname))
 
 # vim: foldmethod=marker ai ts=4 sts=4 et sw=4 ft=python

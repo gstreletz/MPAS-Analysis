@@ -1,0 +1,17 @@
+channels:
+  - conda-forge
+dependencies:
+  - pytest
+  - six
+  - numpy
+  - scipy
+  - lxml
+  - xarray
+  - matplotlib
+  - dask
+  - netcdf4
+  - hdf5
+  - hdf4
+  - nco
+  - pyproj
+  - pillow
